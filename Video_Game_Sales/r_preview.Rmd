@@ -1,0 +1,606 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Objective  
+In this project we will deal with exploratory analysis, where the objective is to understand how the data is distributed and generate insight for future decision-making, this analysis aims to explore as much as possible the data in a simple, intuitive and informative way. The data used in this project contains information only from 1980 to 2016.
+
+## About Dataset
+This dataset contains a list of video games with sales greater than 100,000 copies.It includes various fields related to the games and their platform, also this dataset mainly includes the 
+sales of the countries and regions around the world.
+
+Columns :
+
+* Name - The names of games 
+* Platform - Gaming device used for playing
+* Year - Year of the game release
+* Genre - Genre of the game 
+* Publisher - Publisher name 
+* NA_Sales - North America Sales (in millions)
+* EU_Sales - Europe Sales (in millions)
+* JP_Sales - Japan Sales (in millions)
+* Other_Sales - Other countries sales (in millions)
+* Global_Sales - Sales over the world (in millions)
+
+```{r, warning = FALSE,echo = FALSE}
+library(hrbrthemes)
+library(gganimate)
+library(gapminder)
+library(babynames)
+library(ggthemes)
+library(cowplot)
+library(ggplot2)
+
+# Data Manipulation
+library(tidyverse)
+library(DT)
+
+# Statistics
+library(DescTools)
+
+```
+```{r, warning = FALSE,echo = FALSE}
+data = read_csv("G:\\R\\My Projects\\Video Games Sales Analysis\\vgsales.csv\\vgsales.csv")
+ 
+# removing the rank column from dataframe
+data$Rank = NULL
+
+```
+
+```{r, warning = FALSE,echo = FALSE}
+# selecting the data according to the interest of this study 
+#removing the data where year is nan and years till 2016
+
+data = data[(data$Year != "N/A" & data$Year != "2017" & data$Year != "2020"),]
+data$Year = factor(data$Year)
+```
+
+```{r, warning = FALSE,echo = FALSE}
+datatable(head(data))
+```
+
+
+```{r}
+summary(data)
+```
+## These are the most 10 frequent years where sales were high.
+```{r, warning = FALSE,echo = FALSE}
+# suppressWarnings( as.numeric(c('0', '1', '2', 'three')) )
+freq_year = data.frame(cbind(Frequency = table(data$Year)
+                             ,Percent = prop.table(table(data$Year))*100))
+
+freq_year = freq_year[order(freq_year$Frequency,decreasing = TRUE),]
+
+df = head(freq_year,10)                # most frequent years
+
+# The 10 most frequent years
+a = ggplot(data = df,mapping = aes(x = row.names(df),y =Frequency))+
+  geom_bar(stat = "identity",mapping = aes(fill = row.names(df),color = row.names(df)),
+           alpha = 0.7,size = 1.1) +
+  geom_label(mapping = aes(label = Frequency),fill = "#FFC0CB",size = 4,color = "white") +
+  labs(x = "Years",y = "Frequency")+
+  theme_ipsum()+
+  theme(legend.position="none")
+
+a
+```
+
+
+
+## These are the least 10 years where sales were low.
+```{r, warning = FALSE,echo = FALSE}
+df_1 = tail(freq_year,10)
+
+#The 10 least frequent years
+b = ggplot(data = df_1,mapping = aes(x = row.names(df_1),y = Frequency )) +
+  geom_bar(stat = "identity",mapping = aes(color = row.names(df),fill = row.names(df)),
+           alpha = 0.7,size = 1.5)+
+  geom_label(mapping = aes(label = Frequency),fill = "#FFC0CB",size = 4,color = "white")+
+  labs(x = "Years",y = "Frequency")+
+  theme_ipsum()+
+  theme(legend.position="none")
+b
+```
+# North American Sales Histogram (in millions)
+```{r,warning = FALSE,echo = FALSE}
+q = ggplot(data = data,mapping = aes(x = NA_Sales))+
+  geom_histogram(bins = 80,fill = "blue",color = "cyan")+
+  labs(x = "Sales in North America (in millions)",y = "Frequency")+
+  theme_minimal()
+
+q
+```
+
+## North American Sales < 2 millions
+```{r,warning = FALSE,echo=FALSE}
+
+df_3 = data[data$NA_Sales <2,]  
+w = ggplot(data = df_3,mapping = aes(x = NA_Sales))+
+  geom_histogram(bins = 80,fill = "red",color = "yellow")+
+  labs(x = "Sales in North America (in millions)",y = "Frequency")+
+  theme_minimal()
+
+w
+```
+## Europe Sales Histogram (in millions)
+```{r,warning = FALSE,echo=FALSE}
+
+z = ggplot(data = data,mapping = aes(x = EU_Sales))+
+  geom_histogram(bins = 80,fill = "green",color = "black")+
+  labs(x = "Sales in Europe (in millions)",y = "Frequency")+
+  theme_minimal()
+z
+```
+## Europe Sales < 2 millions
+```{r,warning = FALSE,echo=FALSE}
+data_EU2 = data[(data$EU_Sales<2),]
+x = ggplot(data = data_EU2,mapping = aes(x = EU_Sales))+
+  geom_histogram(bins = 80,fill = "grey",color = "black")+
+  labs(x = "Sales in Europe (in millions)",y = "Frequency")+
+  theme_minimal()
+x
+```
+## Frequency Distribution of Games 
+### Need for Speed:Most Wanted is most frequently distributed game among the whole world
+```{r,warning = FALSE,echo=FALSE}
+games_perc = data.frame(cbind(Frequency = table(data$Name),
+                              Percent = prop.table(table(data$Name)) * 100))
+games_perc = games_perc[order(games_perc$Frequency,decreasing = T),]
+games_perc = head(games_perc,5)
+
+# games_perc
+m = ggplot(data = games_perc,mapping = aes(x = Frequency,y = row.names(games_perc)))+
+  geom_segment(aes(xend=0, yend=row.names(games_perc),color =row.names(games_perc)),
+               size = 2.5, alpha = .5)+
+  geom_point(mapping = aes(fill = row.names(games_perc),color = row.names(games_perc)),size = 3.5)+
+  theme(legend.position = "none")
+
+n = ggplot(data = games_perc,mapping = aes(x = row.names(games_perc),y = Frequency ))+
+  geom_segment(aes(xend=row.names(games_perc), yend=0,color =row.names(games_perc)),
+               size = 2.5, alpha = .5)+
+  geom_point(mapping = aes(fill = row.names(games_perc),color = row.names(games_perc)),size = 3.5)+
+  labs(x = "Games")+
+  theme(legend.position = "none")
+
+plot_grid(m,n+coord_polar(),nrow = 1,ncol = 2)
+
+```
+## Frequency distribution of Gaming Platform
+### PS2(PlayStation) and DS(Dual Screen) are the most used gaming devices among the world 
+```{r,warning = FALSE,echo = FALSE}
+# Gaming Platform
+gaming_platform = data.frame(cbind(Frequency = table(data$Platform),
+                                   Percent = prop.table(table(data$Platform))*100))
+gaming_platform = gaming_platform[order(gaming_platform$Frequency,decreasing = T),]
+
+gaming_platform = head(gaming_platform,7)
+               
+c = ggplot(data = gaming_platform,mapping = aes(x = Frequency,y = row.names(gaming_platform)))+
+  geom_bar(stat = "identity",mapping = aes(fill = row.names(gaming_platform)),alpha = 0.5
+           ,size = 0.5,color = "black")+
+  geom_label(mapping = aes(label = Frequency),fill = "#D3D3D3",color = "black")+
+  labs(x = "Frequency",y = "Gaming Platform")+
+  theme(legend.position = "none")
+
+v = ggplot(data = gaming_platform,mapping = aes(x = row.names(gaming_platform),y = Frequency))+
+  geom_bar(stat = "identity",mapping = aes(fill = row.names(gaming_platform)),alpha = 0.5
+           ,size = 0.5,color = "black")+
+  labs(x = "Gaming Platform")+
+  coord_flip()+
+  theme(legend.position = "none")
+plot_grid(c,v+coord_polar(),nrow = 1,ncol = 2)
+```
+## Frequency distribution of Genre
+### Here, we can say that Action and Sports are the most played Genre in the world.
+```{r,warning = FALSE,echo = FALSE}
+### Genre
+freq_genre = data.frame(cbind(Frequency = table(data$Genre)
+                              ,Percent = prop.table(table(data$Genre))*100))
+freq_genre = freq_genre[order(freq_genre$Frequency,decreasing = TRUE),]
+
+ggplot(data = freq_genre,mapping = aes(x = row.names(freq_genre),y = Frequency))+
+  geom_bar(stat = "identity",mapping = aes(fill = row.names(freq_genre)),color ="black",alpha = 0.4,size = 0.5)+
+  labs(x = "Genre",y = "Frequency" )+
+  geom_label(aes(label = Frequency))+
+  theme(legend.position = "none")
+
+```
+## Frequency distribution of Publisher
+### EA Sports is the most leading publisher of games in the world.
+```{r,warning = FALSE,echo = FALSE}
+freq_publisher = data.frame(cbind(Frequency = table(data$Publisher)
+                            ,Percent = prop.table(table(data$Publisher))*100))
+freq_publisher = freq_publisher[order(freq_publisher$Frequency,decreasing = TRUE),]
+freq_publisher = head(freq_publisher,10)
+
+ggplot(data = freq_publisher,mapping = aes(x = Frequency,y = row.names(freq_publisher)))+
+  geom_line(group = 1,size = 1,color = "blue",linetype = "dashed")+
+  geom_label(aes(label = Frequency,fill = row.names(freq_publisher)),color = "black",size =3)+
+  labs(y = "Publishers")+
+  theme(legend.position = "none")
+```
+## Measure of Central Tendency
+### Mean of the Sales of Games 
+```{r, warning = FALSE,echo = FALSE}
+mean_games = data.frame(Mean = c(mean(data$NA_Sales),mean(data$EU_Sales),mean(data$JP_Sales),
+                          mean(data$Other_Sales),mean(data$Global_Sales)))
+row.names(mean_games) = c("NA_Sales","EU_Sales","JP_Sales","Other_Sales","Global_Sales")
+mean_games
+
+b = ggplot(data = mean_games,mapping = aes(x = Mean,y = row.names(mean_games)))+
+  geom_line(group = 1,linetype = "dashed",color = "black",size = 0.8)+
+  geom_point(mapping = aes(x = Mean,color = row.names(mean_games)),size = 3)+
+  labs(x = "Mean",y = "Games")+
+  theme(legend.position = "none")
+
+a =ggplot(data = mean_games,mapping = aes(x = Mean,y = row.names(mean_games)))+
+  geom_line(group = 1,linetype = "dashed",color = "black",size = 0.8)+
+  geom_point(mapping = aes(x = Mean,color = row.names(mean_games)),size = 3)+
+  labs(x = "Mean",y = "Games")+
+  theme(legend.position = "none")
+
+plot_grid(b,a+coord_polar(),nrow = 1,ncol = 2)
+```
+### Median of the Sales of Games
+```{r, warning = FALSE,echo = FALSE}
+median_games = data.frame(Median = c(median(data$NA_Sales),median(data$EU_Sales),median(data$JP_Sales),
+                                     median(data$Other_Sales),median(data$Global_Sales)))
+row.names(median_games) = c("NA_Sales","EU_Sales","JP_Sales","Other_Sales","Global_Sales")
+
+median_games
+
+```
+
+### Mode
+```{r, warning = FALSE,echo = FALSE}
+mode = function(x){
+  
+  freq = table(x)
+  return(names(freq)[freq == max(freq)])
+  
+}
+mode_games = data.frame(Mode = c(mode(data$NA_Sales),mode(data$EU_Sales),mode(data$JP_Sales),
+                                 mode(data$Other_Sales),mode(data$Global_Sales)))
+row.names(mode_games) = c("NA_Sales","EU_Sales","JP_Sales","Other_Sales","Global_Sales")
+mode_games
+```
+
+### All Measures of Central Tendancy together
+```{r, warning = FALSE,echo = FALSE}
+central_tendency = cbind(mean_games,median_games,mode_games)
+central_tendency
+```
+## Percentile of all the Sales 
+```{r, warning = FALSE,echo = FALSE}
+percentile = c()
+for (i in 1:99){
+  percentile = c(percentile,i/100)
+}
+
+data_percentiles = data.frame(cbind(NA_Sales =quantile(data$NA_Sales,percentile),
+                                    EU_Sales =quantile(data$EU_Sales,percentile),
+                                    JP_Sales =quantile(data$JP_Sales,percentile),
+                                    Other_Sales =quantile(data$Other_Sales,percentile),
+                                    Global_Sales =quantile(data$Global_Sales,percentile)))
+
+# filtering a dataframe by row names 
+req_percentiles = c("25%","50%","75%","99%")
+percentiles = data_percentiles[rownames(data_percentiles) %in% req_percentiles,]
+percentiles
+```
+## Absolute Mean Deviation of all Sales 
+```{r, warning = FALSE,echo = FALSE}
+data_amd = data.frame(ADM = c(MeanAD(data$NA_Sales),MeanAD(data$EU_Sales),MeanAD(data$JP_Sales)
+                              ,MeanAD(data$Other_Sales),MeanAD(data$Global_Sales)))
+row.names(data_amd) = c("NA_Sales",'EU_Sales',"JP_Sales","Other_Sales","Global_Sales")
+data_amd
+```
+## Variance among all the Sales
+```{r, warning = FALSE,echo = FALSE}
+data_var = data.frame(Variance = c(var(data$NA_Sales),var(data$EU_Sales),var(data$JP_Sales)
+                              ,var(data$Other_Sales),var(data$Global_Sales)))
+row.names(data_var) = c("NA_Sales",'EU_Sales',"JP_Sales","Other_Sales","Global_Sales")
+data_var
+```
+## Standard Deviation among the Sales 
+```{r, warning = FALSE,echo = FALSE}
+data_sd = data.frame(SDeviation = c(sqrt(var(data$NA_Sales)),sqrt(var(data$EU_Sales)),sqrt(var(data$JP_Sales))
+                                   ,sqrt(var(data$Other_Sales)),sqrt(var(data$Global_Sales))))
+row.names(data_sd) = c("NA_Sales",'EU_Sales',"JP_Sales","Other_Sales","Global_Sales")
+data_sd
+```
+## Measures of Dispersion all together
+```{r, warning = FALSE,echo = FALSE}
+Dispersion = cbind(data_amd,data_var,data_sd)
+Dispersion
+
+ggplot(data = Dispersion)+
+  geom_bar(stat = "identity",mapping = aes(x = row.names(Dispersion),y = Variance,fill = "Variance")
+           ,size = 1,alpha = 0.8,color = "blue")+
+  geom_bar(stat = "identity",mapping = aes(x = row.names(Dispersion),y = ADM,fill = "ADM")
+           ,size = 1,alpha = 0.5,color = "red")+
+  geom_bar(stat = "identity",mapping = aes(x = row.names(Dispersion),y = SDeviation,fill = "SDeviation")
+           ,size = 1,alpha = 0.4,color = "green")+
+  xlab("")+ylab("")+
+  theme(legend.position = "bottom")
+```
+# Explorartory Data Analysis
+
+### Top North America sales of games
+#### We can say that Wii Sports is the most sold game in the North America
+```{r, warning = FALSE,echo = FALSE}
+top_nasales = aggregate(list(NA_Sales = data$NA_Sales),list(Name = data$Name),FUN = sum)
+top_nasales = top_nasales[order(top_nasales$NA_Sales,decreasing = TRUE),]
+top_nasales = head(top_nasales,10)
+top_nasales
+
+a = ggplot(data = top_nasales, mapping = aes(x = Name, y = NA_Sales)) +
+  geom_bar(stat = "identity", mapping = aes(fill = Name, color = Name), size = 1.1, alpha = .7) +
+  geom_label(mapping = aes(label = NA_Sales), size =4) +
+  xlab("") +
+  ylab("Sales in North America (in millions)") +
+  ggtitle("The 10 best selling games in North America")+
+  scale_x_discrete(guide = guide_axis(n.dodge=2))+
+  theme(legend.position = "none")
+
+a
+```
+
+
+### Top Europe sales of games 
+#### In Europe region, Wii Sports and GTA 5 are most sold games. 
+```{r, warning = FALSE,echo = FALSE}
+top_eusales = aggregate(list(EU_Sales = data$EU_Sales),list(Name = data$Name),FUN = sum)
+top_eusales = top_eusales[order(top_eusales$EU_Sales,decreasing = TRUE),]
+top_eusales = head(top_eusales,10)
+top_eusales
+
+b = ggplot(data = top_eusales, mapping = aes(x = Name, y = EU_Sales)) +
+  geom_bar(stat = "identity", mapping = aes(fill = Name, color = Name), size = 1.1, alpha = .7) +
+  geom_label(mapping = aes(label = EU_Sales), size = 4) +
+  xlab("") +
+  ylab("Sales in Europe (in millions)") +
+  ggtitle("The 10 best selling games in Europe")+
+  scale_x_discrete(guide = guide_axis(n.dodge=2))+
+  theme(legend.position = "none")
+b
+```
+
+
+### Top Japan Sales of games
+#### Pokemon Red is the most sold game in Japan.
+```{r, warning = FALSE,echo = FALSE}
+top_jpsales = aggregate(list(JP_sales = data$JP_Sales),list(Name = data$Name),FUN = sum)
+top_jpsales = top_jpsales[order(top_jpsales$JP_sales,decreasing = TRUE),]
+top_jpsales = head(top_jpsales,10)
+top_jpsales
+
+c = ggplot(data = top_jpsales, mapping = aes(x = Name, y = JP_sales)) +
+  geom_bar(stat = "identity", mapping = aes(fill = Name, color = Name), size = 1.1, alpha = .7) +
+  geom_label(mapping = aes(label = JP_sales), size = 4) +
+  xlab("") +
+  ylab("Sales in Japan (in millions)") +
+  ggtitle("The 10 best selling games in Japan")+
+  scale_x_discrete(guide = guide_axis(n.dodge=3))+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+c
+```
+
+
+### Other Countires Sales
+#### GTA 5 is the most played game in other countires.
+```{r, warning = FALSE,echo = FALSE}
+top_othersales = aggregate(list(Other_Sales = data$Other_Sales),list(Name = data$Name),FUN = sum)
+top_othersales = top_othersales[order(top_othersales$Other_Sales,decreasing = TRUE),]
+top_othersales = head(top_othersales,10)
+top_othersales
+
+d = ggplot(data = top_othersales, mapping = aes(x = Name, y = Other_Sales)) +
+  geom_bar(stat = "identity", mapping = aes(fill = Name), size = 1.1, alpha =.7) +
+  geom_label(mapping = aes(label = Other_Sales), size = 4) +
+  xlab("") +
+  ylab("Sales in the in other countries (in millions)") +
+  ggtitle("The 10 best selling games in other countries")+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())+
+  scale_fill_discrete(name = "Games")
+
+d
+```
+
+
+### Top Global Sales of games 
+#### Wii Sports is the most played game globally by people
+```{r, warning = FALSE,echo = FALSE}
+top_globalsales = aggregate(list(Global_sales = data$Global_Sales),list(Name = data$Name),FUN = sum)
+top_globalsales = top_globalsales[order(top_globalsales$Global_sales,decreasing = TRUE),]
+top_globalsales = head(top_globalsales,10)
+top_globalsales
+
+e = ggplot(data = top_globalsales, mapping = aes(x = Name, y = Global_sales)) +
+  geom_bar(stat = "identity", mapping = aes(fill = Name), size = 1.1, alpha =.7) +
+  geom_label(mapping = aes(label = Global_sales), size = 4) +
+  xlab("") +
+  ylab("Sales in all over the world (in millions)") +
+  ggtitle("The 10 best selling games in all over the world")+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())+
+  scale_fill_discrete(name = "Games")
+
+e
+```
+```{r, warning = FALSE,echo = FALSE}
+h = ggplot(data = top_globalsales, mapping = aes(x = Name, y = Global_sales)) +
+  geom_bar(stat = "identity", mapping = aes(fill = Name, color = Name), size = 0.4, alpha = .7) +
+  geom_label(mapping = aes(label = Global_sales), size = 2.8) +
+  coord_flip()+
+  xlab("") +
+  ylab("Sales in the rest of the world (in millions)") +
+  ggtitle("The 10 best selling games in rest of the world")+
+  theme(legend.position = "none")
+
+h
+```
+
+```{r, warning = FALSE,echo = FALSE}
+
+f = ggplot(data = head(top_globalsales,5), mapping = aes(x = Name, y = Global_sales)) +
+  geom_line(group = 1) +
+  geom_point(mapping = aes(fill = Name),size = 3)+
+  xlab("") +
+  ylab("Sales in the rest of the world (in millions)") +
+  ggtitle("The 10 best selling games in rest of the world")+
+  theme(legend.position = "none")
+
+f
+```
+```{r, warning = FALSE,echo = FALSE}
+df_top5 = data[(data$Name == "Wii Sports" | data$Name == "Grand Theft Auto V" | 
+                 data$Name == "Super Mario Bros." | data$Name == "Tetris" | data$Name == "Mario Kart Wii"),]
+ggplot(data = df_top5, mapping = aes(x = Year,y = Global_Sales))+
+  geom_bar(stat = "identity",mapping = aes(color = Name,fill = Name),alpha = 0.7,size = 1)+
+  labs(x = "Top 5 games",y = "Sales",title = "Sales of top 5 games over the world")+
+  theme(legend.position = "none",axis.text=element_text(size=6.5))+
+  facet_wrap(~Name)
+
+```
+
+
+## Number of Sales per platform
+
+### North America sales
+```{r, warning = FALSE,echo = FALSE}
+top_nasales = aggregate(list(NA_sales = data$NA_Sales),list(Platform = data$Platform),FUN = sum)
+top_nasales = top_nasales[order(top_nasales$NA_sales,decreasing = TRUE),]
+datatable(top_nasales)
+
+```
+### PS2 and Xbox360 is the most used gaming device by people.
+```{r, warning = FALSE,echo = FALSE}
+h = ggplot(data = top_nasales,mapping = aes(x = Platform,y = NA_sales))+
+  geom_line(group = 1,linetype = "dashed",size = 0.5,color = "purple")+
+  geom_label(mapping = aes(label = NA_sales,fill = Platform),size = 2)+
+  theme(legend.position = "none",axis.text=element_text(size=6))
+
+h
+```
+
+### Europe sales
+```{r, warning = FALSE,echo = FALSE}
+top_eusales = aggregate(list(EU_Sales = data$EU_Sales),list(Platform = data$Platform),FUN = sum)
+top_eusales = top_eusales[order(top_eusales$EU_Sales,decreasing = TRUE),]
+datatable(top_eusales)
+```
+### PS3 and PS2 are most used gaming devices in Europe.
+```{r, warning = FALSE,echo = FALSE}
+e = ggplot(data = top_eusales,mapping = aes(x = Platform,y = EU_Sales))+
+  geom_line(group = 1,linetype = "dashed",size = 0.5,color = "purple")+
+  geom_label(mapping = aes(label = EU_Sales,fill = Platform),size = 2)+
+  theme(legend.position = "none",axis.text=element_text(size=6))
+
+e
+```
+
+
+### Japan Sales
+```{r, warning = FALSE,echo = FALSE}
+
+top_jpsales = aggregate(list(JP_sales = data$JP_Sales),list(Platform = data$Platform),FUN = sum)
+top_jpsales = top_jpsales[order(top_jpsales$JP_sales,decreasing = TRUE),]
+datatable(top_jpsales)
+
+```
+#### Dual Screen is most used gaming device in Japan.
+```{r, warning = FALSE,echo = FALSE}
+y = ggplot(data = top_jpsales,mapping = aes(x = Platform,y = JP_sales))+
+  geom_line(group = 1,linetype = "dashed",size = 0.5,color = "purple")+
+  geom_label(mapping = aes(label = JP_sales,fill = Platform),size = 2)+
+  theme(legend.position = "none",axis.text=element_text(size=6))
+y
+```
+
+
+### Other Countires Sales
+```{r, warning = FALSE,echo = FALSE}
+
+top_othersales = aggregate(list(Other_Sales = data$Other_Sales),list(Platform = data$Platform),FUN = sum)
+top_othersales = top_othersales[order(top_othersales$Other_Sales,decreasing = TRUE),]
+datatable(top_othersales)
+```
+#### PS2 is most used gaming device in rest of th world.
+```{r, warning = FALSE,echo = FALSE}
+s = ggplot(data = top_othersales,mapping = aes(x = Platform,y = Other_Sales))+
+  geom_line(group = 1,linetype = "dashed",size = 0.5,color = "purple")+
+  geom_label(mapping = aes(label = Other_Sales,fill = Platform),size = 2)+
+  theme(legend.position = "none",axis.text=element_text(size=6))
+s
+```
+### Global Sales
+#### PS2 is the most used gaming device globally.
+```{r, warning = FALSE,echo = FALSE}
+top_globalsales = aggregate(list(Global_sales =data$Global_Sales),list(Platform = data$Platform),sum)
+top_globalsales = top_globalsales[order(top_globalsales$Global_sales,decreasing = TRUE),]
+top_globalsales = head(top_globalsales,10)
+
+ggplot(data = top_globalsales,mapping = aes(x = Platform,y = Global_sales))+
+  geom_segment(mapping = aes(xend = Platform,yend = 0,color = Platform),size = 1.5)+
+  geom_line(group = 1,linetype = "dashed",size = 0.7,color = "black")+
+  theme(legend.position = "none")+
+  geom_point(mapping = aes(fill = Platform,color = Platform),size = 4)
+
+```
+### Total Global Sales by Year
+```{r, warning = FALSE,echo = FALSE}
+data_global = aggregate(list(Global_Sales = data$Global_Sales),list(Year = data$Year),FUN = sum)
+
+data_global = data_global[order(data_global$Year),]
+datatable(data_global)
+
+```
+```{r, warning = FALSE,echo = FALSE}
+a = ggplot(data = data_global,mapping = aes(x = Year,y = Global_Sales))+
+  geom_line(group = 1,linetype = "dashed",color = "blue")+
+  geom_point(mapping = aes(color = Year),size = 2,alpha = 0.7)+
+  theme(legend.position = "none",axis.text=element_text(size=5.159))
+
+c = ggplot(data = data_global,mapping = aes(x = Year,y = Global_Sales))+
+  geom_line(group = 1,color = "blue",size = 1)+
+  geom_label(mapping = aes(label = Global_Sales),size = 2,fill = "#88ace0")+
+  theme(legend.position = "none",axis.text=element_text(size=5.159))
+
+plot_grid(a,c,nrow = 2,ncol = 1)
+```
+### We can conclude that, from 2007 to 2010 sales of games over the world was strong.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
